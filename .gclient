@@ -7,7 +7,10 @@ solutions = [
       'src/third_party/angle/third_party/VK-GL-CTS/src': None,
     },
     'custom_vars': {
-      'checkout_pgo_profiles': False,
+      # Official Android builds require the V8 builtins PGO profile.
+      # Keep this enabled so gclient runhooks downloads the x64 profile
+      # consumed by ARM64 V8 builds.
+      'checkout_pgo_profiles': True,
       'checkout_telemetry_dependencies': False,
     },
   },
