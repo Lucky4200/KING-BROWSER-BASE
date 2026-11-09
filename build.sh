@@ -13,6 +13,10 @@ fi
 export CHROMIUM_SOURCE="https://chromium.googlesource.com/chromium/src.git"
 export DEBIAN_FRONTEND=noninteractive
 
+# Shared build-only identity is inherited by Chromium and all gclient sub-repositories.
+git config --global user.name "KING-BROWSER Build"
+git config --global user.email "build@localhost"
+
 sudo apt-get update
 sudo apt-get install -y lsb-release file git curl python3 python3-pillow imagemagick librsvg2-bin
 
@@ -44,6 +48,36 @@ replace "$SCRIPT_DIR/vanadium/patches" "vanadium" "titanium"
 git am --whitespace=nowarn --keep-non-patch "$SCRIPT_DIR"/vanadium/patches/*.patch
 
 gclient sync -D --no-history --nohooks
+
+# Harden Vanadium's subproject patch helper: never index empty git-am output,
+# and print stderr so a real patch failure is diagnosable.
+python3 - "$SCRIPT_DIR/vanadium/tools/common/apply_subprojects_patches.py" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+old = """            git_am_stdout_lines = git_am_stdout_str.splitlines()
+            git_am_patch_msg = git_am_stdout_lines[0].replace('Applying: ', '')
+            if git_am_completed_proc.returncode != 0:
+"""
+new = """            git_am_stdout_lines = git_am_stdout_str.splitlines()
+            if git_am_stdout_lines:
+                git_am_patch_msg = git_am_stdout_lines[0].replace('Applying: ', '')
+            else:
+                git_am_patch_msg = f'<no git-am stdout; patch: {patches_path_abs}>'
+            if git_am_completed_proc.returncode != 0:
+                if not git_am_stdout_lines:
+                    git_am_stderr_str = git_am_completed_proc.stderr.decode('utf-8', errors='replace')
+                    print(f'git am failed without stdout for {patches_path_abs}', file=sys.stderr)
+                    if git_am_stderr_str:
+                        print(git_am_stderr_str, file=sys.stderr)
+"""
+if old not in source:
+    raise SystemExit("Expected upstream helper code was not found; refusing to patch an unexpected version.")
+path.write_text(source.replace(old, new))
+PY
+
 gclient runhooks
 ./build/install-build-deps.sh --no-prompt
 
