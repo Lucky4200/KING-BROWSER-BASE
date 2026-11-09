@@ -4,7 +4,8 @@ target_os = "android"
 target_cpu = "arm64"
 is_component_build = false
 is_debug = false
-is_official_build = true
+# Non-official optimized build: avoids official PGO/ThinLTO overhead for the first usable APK.
+is_official_build = false
 symbol_level = 0
 disable_fieldtrial_testing_config = true
 ffmpeg_branding = "Chrome"
