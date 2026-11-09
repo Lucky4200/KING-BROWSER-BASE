@@ -1,6 +1,17 @@
 name: Build ARM64 APK
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'build.sh'
+      - 'args.gn'
+      - '.gclient'
+      - '.github/workflows/build.yml'
+      - 'patch.sh'
+      - 'vanadium'
+      - 'extensions/**'
+      - 'res/**'
   workflow_dispatch:
 
 permissions:
