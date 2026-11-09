@@ -82,6 +82,13 @@ gclient runhooks
 ./build/install-build-deps.sh --no-prompt
 
 source "$SCRIPT_DIR/patch.sh"
+
+# Chromium 157 references base::android::android_info in supported_types.cc;
+# include its declaration explicitly instead of relying on transitive headers.
+if ! grep -q '#include "base/android/android_info.h"' media/base/supported_types.cc; then
+  sed -i '/#include "media\/base\/android\/media_codec_util.h"/i #include "base/android/android_info.h"' media/base/supported_types.cc
+fi
+
 cp "$SCRIPT_DIR/args.gn" out/Default/args.gn
 gn gen out/Default
 mkdir -p out/release
