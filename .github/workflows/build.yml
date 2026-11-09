@@ -19,7 +19,7 @@ permissions:
 
 # A newer build replaces an older stuck/obsolete build instead of waiting in a queue.
 concurrency:
-  group: king-browser-arm64-build
+  group: king-browser-arm64-build-fastlane
   cancel-in-progress: true
 
 jobs:
