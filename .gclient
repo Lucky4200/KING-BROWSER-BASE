@@ -7,7 +7,7 @@ solutions = [
       'src/third_party/angle/third_party/VK-GL-CTS/src': None,
     },
     'custom_vars': {
-      'checkout_pgo_profiles': True,
+      'checkout_pgo_profiles': False,
       'checkout_telemetry_dependencies': False,
     },
   },
