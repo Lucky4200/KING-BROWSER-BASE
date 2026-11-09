@@ -22,6 +22,10 @@ export PATH="$PWD/depot_tools:$PATH"
 mkdir -p chromium/src/out/Default
 cd chromium/src
 git init
+# Local build-only identity for applying upstream patches. This is not a login,
+# does not use the user's email, and is not sent as an authentication credential.
+git config --local user.name "KING-BROWSER Build"
+git config --local user.email "build@localhost"
 git remote add origin "$CHROMIUM_SOURCE"
 git fetch --depth 1 "$CHROMIUM_SOURCE" "+refs/tags/$VERSION:chromium_$VERSION"
 git checkout "$VERSION"
