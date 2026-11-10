@@ -237,7 +237,7 @@ public class MainActivity extends Activity {
             "<style>" +
             "*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:28px 20px 36px;color:#f7f7ff;font-family:Arial,sans-serif;" +
             "background-color:#090d1c;background-image:linear-gradient(145deg,rgba(7,12,27,.78),rgba(18,22,48,.66) 55%,rgba(5,24,38,.78)),url(\'" + backgroundImage + "\');" +
-            "background-size:cover;background-position:center;background-attachment:fixed}" +
+            "background-size:100% 100%;background-repeat:no-repeat;background-position:center center;background-attachment:fixed}" +
             ".brand{font-size:12px;letter-spacing:4px;color:#b9b3ff;font-weight:bold;margin-top:12px}" +
             "h1{font-size:34px;line-height:1.1;margin:12px 0 8px}.sub{color:#b8bfd3;font-size:14px;line-height:1.5}" +
             ".glass{margin-top:26px;padding:20px;border:1px solid rgba(255,255,255,.18);border-radius:22px;" +
