@@ -29,6 +29,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.IOException;
+import android.util.Base64;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -228,11 +232,12 @@ public class MainActivity extends Activity {
     private void showHomePage() {
         boolean adBlockOn = preferences.getBoolean(PREF_ADBLOCK, true);
         String status = adBlockOn ? "AD BLOCK IS ON" : "AD BLOCK IS OFF";
+        String backgroundImage = loadImageDataUri("king_browser_background");
         String html = "<!doctype html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'>" +
             "<style>" +
             "*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:28px 20px 36px;color:#f7f7ff;font-family:Arial,sans-serif;" +
-            "background:radial-gradient(circle at 15% 10%,rgba(111,86,220,.45),transparent 38%)," +
-            "radial-gradient(circle at 90% 35%,rgba(29,150,170,.28),transparent 35%),linear-gradient(145deg,#090d1c,#19142f 55%,#081827)}" +
+            "background-color:#090d1c;background-image:linear-gradient(145deg,rgba(7,12,27,.78),rgba(18,22,48,.66) 55%,rgba(5,24,38,.78)),url(\'" + backgroundImage + "\');" +
+            "background-size:cover;background-position:center;background-attachment:fixed}" +
             ".brand{font-size:12px;letter-spacing:4px;color:#b9b3ff;font-weight:bold;margin-top:12px}" +
             "h1{font-size:34px;line-height:1.1;margin:12px 0 8px}.sub{color:#b8bfd3;font-size:14px;line-height:1.5}" +
             ".glass{margin-top:26px;padding:20px;border:1px solid rgba(255,255,255,.18);border-radius:22px;" +
@@ -255,6 +260,20 @@ public class MainActivity extends Activity {
             "<a class='tile' href='https://www.instagram.com'>Instagram<span>Social updates</span></a>" +
             "</div><div class='foot'>Tap the ⋮ button above for browser settings</div></body></html>";
         webView.loadDataWithBaseURL(HOME_URL, html, "text/html", "UTF-8", null);
+    }
+
+    private String loadImageDataUri(String resourceName) {
+        int resourceId = getResources().getIdentifier(resourceName, "drawable", getPackageName());
+        if (resourceId == 0) return "";
+        try (InputStream input = getResources().openRawResource(resourceId);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+            return "data:image/jpeg;base64," + Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP);
+        } catch (IOException exception) {
+            return "";
+        }
     }
 
     private void showSettings() {
