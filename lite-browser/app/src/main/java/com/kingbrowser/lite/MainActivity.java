@@ -198,7 +198,7 @@ public class MainActivity extends Activity {
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
         } else {
-            showHomePage();
+            webView.loadUrl("https://www.youtube.com");
         }
     }
 
