@@ -87,3 +87,5 @@ jobs:
             Package: APK only.
           files: ${{ steps.release.outputs.file }}
           fail_on_unmatched_files: true
+
+# Trigger a fresh ARM64 build after signing secrets were configured.
