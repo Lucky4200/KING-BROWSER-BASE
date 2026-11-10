@@ -3,6 +3,7 @@ package com.kingbrowser.lite;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -111,6 +112,12 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams goParams = new LinearLayout.LayoutParams(dp(58), dp(44));
         goParams.leftMargin = dp(7);
         toolbar.addView(go, goParams);
+
+        Button liveTv = makeButton("TV", Color.rgb(190, 48, 75));
+        LinearLayout.LayoutParams tvParams = new LinearLayout.LayoutParams(dp(48), dp(44));
+        tvParams.leftMargin = dp(6);
+        toolbar.addView(liveTv, tvParams);
+        liveTv.setOnClickListener(v -> startActivity(new Intent(this, TvChannelsActivity.class)));
 
         Button menu = makeButton("⋮", Color.argb(105, 255, 255, 255));
         menu.setTextSize(23);

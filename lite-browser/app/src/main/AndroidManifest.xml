@@ -11,6 +11,13 @@
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="false">
         <activity
+            android:name=".TvPlayerActivity"
+            android:exported="false"
+            android:screenOrientation="sensor" />
+        <activity
+            android:name=".TvChannelsActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true">
