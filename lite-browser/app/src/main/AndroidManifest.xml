@@ -3,6 +3,8 @@
     <application
         android:allowBackup="false"
         android:label="KING-BROWSER Lite"
+        android:icon="@drawable/king_browser_logo"
+        android:roundIcon="@drawable/king_browser_logo"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="false">
         <activity
