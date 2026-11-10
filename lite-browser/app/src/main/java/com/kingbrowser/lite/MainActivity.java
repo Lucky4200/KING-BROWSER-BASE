@@ -258,6 +258,8 @@ public class MainActivity extends Activity {
             "<a class='tile' href='https://www.youtube.com'>YouTube<span>Videos and music</span></a>" +
             "<a class='tile' href='https://www.wikipedia.org'>Wikipedia<span>Explore knowledge</span></a>" +
             "<a class='tile' href='https://www.instagram.com'>Instagram<span>Social updates</span></a>" +
+            "<a class='tile' href='https://subdubanime.site'>Sub Dub Anime<span>Open website</span></a>" +
+            "<a class='tile' href='https://allsitehub.site'>All Site Hub<span>Open website</span></a>" +
             "</div><div class='foot'>Tap the ⋮ button above for browser settings</div></body></html>";
         webView.loadDataWithBaseURL(HOME_URL, html, "text/html", "UTF-8", null);
     }
