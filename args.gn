@@ -4,9 +4,12 @@ target_os = "android"
 target_cpu = "arm64"
 is_component_build = false
 is_debug = false
-# Non-official optimized build: avoids official PGO/ThinLTO overhead for the first usable APK.
+# Lightweight first release: skip official PGO/ThinLTO and debug symbols.
 is_official_build = false
+enable_android_secondary_abi = false
 symbol_level = 0
+blink_symbol_level = 0
+v8_symbol_level = 0
 disable_fieldtrial_testing_config = true
 ffmpeg_branding = "Chrome"
 proprietary_codecs = true
@@ -25,7 +28,7 @@ use_login_database_as_backend = true
 build_contextual_search = false
 dcheck_always_on = false
 enable_iterator_debugging = false
-exclude_unwind_tables = false
+exclude_unwind_tables = true
 icu_use_data_file = true
 rtc_build_examples = false
 use_errorprone_java_compiler = false
@@ -37,3 +40,4 @@ include_both_v8_snapshots_android_secondary_abi = false
 v8_enable_drumbrake = true
 v8_drumbrake_bounds_checks = true
 generate_linker_map = false
+use_thin_lto = false

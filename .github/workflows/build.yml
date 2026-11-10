@@ -17,10 +17,10 @@ on:
 permissions:
   contents: write
 
-# A newer build replaces an older stuck/obsolete build instead of waiting in a queue.
+# Do not cancel a long Chromium compile just because another commit is pushed.
 concurrency:
-  group: king-browser-arm64-build-fastlane
-  cancel-in-progress: true
+  group: king-browser-arm64-build
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -33,7 +33,7 @@ jobs:
         with:
           submodules: true
 
-      # Keep successful Chromium compile outputs so a retry can reuse completed C++ work.
+      # Reuse successful C++ compilation outputs after a retry.
       - name: Restore Chromium compile cache
         uses: actions/cache@v4
         with:
