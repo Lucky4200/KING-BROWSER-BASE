@@ -250,6 +250,8 @@ public class MainActivity extends Activity {
             "a.tile.cinema{background:linear-gradient(135deg,rgba(190,20,43,.96),rgba(53,9,25,.96));border-color:rgba(255,125,142,.55)}" +
             ".tile .tag{display:inline-block;margin-top:0;margin-bottom:9px;padding:4px 8px;border-radius:20px;background:rgba(255,255,255,.16);color:#fff;font-size:9px;letter-spacing:1.5px}" +
             ".foot{margin-top:28px;text-align:center;color:#8993ae;font-size:11px}" +
+            "a.tile:focus,a.tile:focus-visible{outline:3px solid #fff;outline-offset:4px;transform:scale(1.03)}" +
+            "@media (min-width:900px){body{padding:46px 7vw}.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}a.tile{min-height:145px;padding:24px;font-size:19px}.tile span{font-size:12px}h1{font-size:46px}.glass{max-width:1100px}}" +
             "</style></head><body>" +
             "<div class='brand'>KING BROWSER</div><h1>Your web.<br>Under your control.</h1>" +
             "<div class='sub'>Fast, simple and private browsing with a clean glass-style interface.</div>" +
