@@ -244,8 +244,11 @@ public class MainActivity extends Activity {
             "background:rgba(255,255,255,.09);box-shadow:0 14px 38px rgba(0,0,0,.18)}" +
             ".status{display:inline-block;padding:8px 12px;border-radius:30px;background:rgba(55,205,150,.15);color:#7ff0c2;font-size:11px;letter-spacing:1px;font-weight:bold}" +
             ".grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}" +
-            "a.tile{display:block;text-decoration:none;color:white;padding:18px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);font-size:14px;font-weight:bold}" +
-            ".tile span{display:block;color:#aeb7d0;font-size:11px;font-weight:normal;margin-top:7px}" +
+            "a.tile{display:block;min-height:88px;text-decoration:none;color:white;padding:17px 14px;border-radius:19px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.09);font-size:14px;font-weight:bold;box-shadow:0 10px 24px rgba(0,0,0,.18);transition:transform .15s ease}" +
+            ".tile span{display:block;color:#c2c8dc;font-size:10px;font-weight:normal;letter-spacing:1.2px;margin-top:8px}" +
+            "a.tile.anime{background:linear-gradient(135deg,rgba(104,49,180,.94),rgba(28,38,93,.92));border-color:rgba(205,166,255,.55)}" +
+            "a.tile.cinema{background:linear-gradient(135deg,rgba(190,20,43,.96),rgba(53,9,25,.96));border-color:rgba(255,125,142,.55)}" +
+            ".tile .tag{display:inline-block;margin-top:0;margin-bottom:9px;padding:4px 8px;border-radius:20px;background:rgba(255,255,255,.16);color:#fff;font-size:9px;letter-spacing:1.5px}" +
             ".foot{margin-top:28px;text-align:center;color:#8993ae;font-size:11px}" +
             "</style></head><body>" +
             "<div class='brand'>KING BROWSER</div><h1>Your web.<br>Under your control.</h1>" +
@@ -258,8 +261,8 @@ public class MainActivity extends Activity {
             "<a class='tile' href='https://www.youtube.com'>YouTube<span>Videos and music</span></a>" +
             "<a class='tile' href='https://www.wikipedia.org'>Wikipedia<span>Explore knowledge</span></a>" +
             "<a class='tile' href='https://www.instagram.com'>Instagram<span>Social updates</span></a>" +
-            "<a class='tile' href='https://subdubanime.site'>Sub Dub Anime<span>Open website</span></a>" +
-            "<a class='tile' href='https://allsitehub.site'>All Site Hub<span>Open website</span></a>" +
+            "<a class='tile anime' href='https://subdubanime.site'><span class='tag'>ANIME WORLD</span>Sub Dub Anime<span>ANIME • DUBBED • SUBTITLED</span></a>" +
+            "<a class='tile cinema' href='https://allsitehub.site'><span class='tag'>CINEMA HUB</span>All Site Hub<span>MOVIES • SERIES • STREAMING</span></a>" +
             "</div><div class='foot'>Tap the ⋮ button above for browser settings</div></body></html>";
         webView.loadDataWithBaseURL(HOME_URL, html, "text/html", "UTF-8", null);
     }
