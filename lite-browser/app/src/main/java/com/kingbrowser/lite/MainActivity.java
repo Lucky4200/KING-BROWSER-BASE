@@ -1,11 +1,19 @@
 package com.kingbrowser.lite;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Message;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -15,22 +23,34 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.ByteArrayInputStream;
-import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends Activity {
+    private static final String PREFS = "king_browser_settings";
+    private static final String PREF_ADBLOCK = "adblock_enabled";
+    private static final String PREF_TRACKING = "tracking_enabled";
+    private static final String PREF_WHITELIST = "site_whitelist";
+    private static final String HOME_URL = "https://kingbrowser.home/";
+
     private WebView webView;
     private EditText addressBar;
     private ProgressBar progressBar;
+    private SharedPreferences preferences;
+    private final AtomicInteger blockedRequests = new AtomicInteger(0);
 
-    // Lightweight built-in domain blocker. This is a basic starter list, not a full EasyList engine.
-    private static final Set<String> BLOCKED_HOSTS = new HashSet<>(Arrays.asList(
+    // Lightweight host-level protection. This is intentionally small to keep the Lite APK fast.
+    private static final Set<String> AD_HOSTS = new HashSet<>(Arrays.asList(
         "doubleclick.net",
         "googlesyndication.com",
         "googleadservices.com",
@@ -42,49 +62,63 @@ public class MainActivity extends Activity {
         "outbrain.com",
         "adform.net",
         "adcolony.com",
-        "appsflyer.com",
-        "branch.io",
-        "scorecardresearch.com",
         "zedo.com",
         "popads.net",
         "propellerads.com"
     ));
 
+    private static final Set<String> TRACKER_HOSTS = new HashSet<>(Arrays.asList(
+        "appsflyer.com",
+        "branch.io",
+        "scorecardresearch.com",
+        " doubleclick.net".trim()
+    ));
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        preferences = getSharedPreferences(PREFS, MODE_PRIVATE);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.rgb(18, 18, 24));
+        root.setBackground(new GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            new int[]{Color.rgb(9, 13, 28), Color.rgb(25, 20, 48), Color.rgb(8, 20, 35)}
+        ));
 
         LinearLayout toolbar = new LinearLayout(this);
         toolbar.setOrientation(LinearLayout.HORIZONTAL);
-        toolbar.setPadding(dp(10), dp(10), dp(10), dp(8));
-        toolbar.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        toolbar.setGravity(Gravity.CENTER_VERTICAL);
+        toolbar.setPadding(dp(10), dp(10), dp(10), dp(9));
+        toolbar.setBackground(rounded(Color.argb(145, 27, 32, 54), dp(18)));
 
         addressBar = new EditText(this);
         addressBar.setSingleLine(true);
         addressBar.setHint("Search or enter website");
-        addressBar.setHintTextColor(Color.LTGRAY);
+        addressBar.setHintTextColor(Color.rgb(177, 183, 205));
         addressBar.setTextColor(Color.WHITE);
         addressBar.setTextSize(14);
-        addressBar.setPadding(dp(14), 0, dp(14), 0);
-        addressBar.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(120, 90, 220)));
+        addressBar.setPadding(dp(13), 0, dp(10), 0);
+        addressBar.setBackground(rounded(Color.argb(100, 255, 255, 255), dp(14)));
         addressBar.setImeOptions(EditorInfo.IME_ACTION_GO);
         toolbar.addView(addressBar, new LinearLayout.LayoutParams(0, dp(46), 1f));
 
-        Button go = new Button(this);
-        go.setText("GO");
-        go.setTextColor(Color.WHITE);
-        go.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(105, 75, 205)));
-        toolbar.addView(go, new LinearLayout.LayoutParams(dp(64), dp(46)));
+        Button go = makeButton("GO", Color.rgb(116, 91, 220));
+        LinearLayout.LayoutParams goParams = new LinearLayout.LayoutParams(dp(58), dp(44));
+        goParams.leftMargin = dp(7);
+        toolbar.addView(go, goParams);
 
+        Button menu = makeButton("⋮", Color.argb(105, 255, 255, 255));
+        menu.setTextSize(23);
+        LinearLayout.LayoutParams menuParams = new LinearLayout.LayoutParams(dp(44), dp(44));
+        menuParams.leftMargin = dp(6);
+        toolbar.addView(menu, menuParams);
         root.addView(toolbar);
 
         progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progressBar.setMax(100);
-        progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(Color.rgb(145, 110, 255)));
+        progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(Color.rgb(157, 128, 255)));
+        progressBar.setVisibility(View.GONE);
         root.addView(progressBar, new LinearLayout.LayoutParams(-1, dp(2)));
 
         webView = new WebView(this);
@@ -96,7 +130,8 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setSupportMultipleWindows(false);
-        webView.setBackgroundColor(Color.WHITE);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        webView.setBackgroundColor(Color.TRANSPARENT);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -106,12 +141,12 @@ public class MainActivity extends Activity {
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                if (isAdHost(request.getUrl().getHost())) {
+                String host = request.getUrl().getHost();
+                if (isBlockedHost(host)) {
+                    blockedRequests.incrementAndGet();
                     return new WebResourceResponse(
-                        "text/plain", "UTF-8",
-                        204, "No Content",
-                        java.util.Collections.emptyMap(),
-                        new ByteArrayInputStream(new byte[0])
+                        "text/plain", "UTF-8", 204, "No Content",
+                        Collections.emptyMap(), new ByteArrayInputStream(new byte[0])
                     );
                 }
                 return super.shouldInterceptRequest(view, request);
@@ -119,14 +154,26 @@ public class MainActivity extends Activity {
 
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
-                addressBar.setText(url);
+                if (!HOME_URL.equals(url)) addressBar.setText(url);
                 progressBar.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                addressBar.setText(url);
+                if (HOME_URL.equals(url) || url.startsWith("data:text/html")) {
+                    addressBar.setText("");
+                } else {
+                    addressBar.setText(url);
+                }
                 progressBar.setVisibility(View.GONE);
+            }
+        });
+
+        // WebView does not open secondary windows, so JavaScript pop-up windows stay blocked.
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                return false;
             }
         });
 
@@ -134,6 +181,7 @@ public class MainActivity extends Activity {
         setContentView(root);
 
         go.setOnClickListener(v -> loadAddress());
+        menu.setOnClickListener(v -> showSettings());
         addressBar.setOnEditorActionListener((TextView v, int actionId, KeyEvent event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO ||
                 (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
@@ -146,17 +194,188 @@ public class MainActivity extends Activity {
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
         } else {
-            webView.loadUrl("about:blank");
+            showHomePage();
         }
     }
 
-    private boolean isAdHost(String host) {
-        if (host == null) return false;
+    private boolean isBlockedHost(String host) {
+        if (host == null || isWhitelisted(host)) return false;
         String normalized = host.toLowerCase(Locale.ROOT);
-        for (String blocked : BLOCKED_HOSTS) {
-            if (normalized.equals(blocked) || normalized.endsWith("." + blocked)) return true;
+        if (preferences.getBoolean(PREF_ADBLOCK, true) && matchesHost(normalized, AD_HOSTS)) return true;
+        return preferences.getBoolean(PREF_TRACKING, true) && matchesHost(normalized, TRACKER_HOSTS);
+    }
+
+    private boolean matchesHost(String host, Set<String> domains) {
+        for (String domain : domains) {
+            if (host.equals(domain) || host.endsWith("." + domain)) return true;
         }
         return false;
+    }
+
+    private Set<String> getWhitelist() {
+        Set<String> saved = preferences.getStringSet(PREF_WHITELIST, Collections.emptySet());
+        return new HashSet<>(saved);
+    }
+
+    private boolean isWhitelisted(String host) {
+        String normalized = host.toLowerCase(Locale.ROOT);
+        for (String allowed : getWhitelist()) {
+            if (normalized.equals(allowed) || normalized.endsWith("." + allowed)) return true;
+        }
+        return false;
+    }
+
+    private void showHomePage() {
+        boolean adBlockOn = preferences.getBoolean(PREF_ADBLOCK, true);
+        String status = adBlockOn ? "AD BLOCK IS ON" : "AD BLOCK IS OFF";
+        String html = "<!doctype html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'>" +
+            "<style>" +
+            "*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:28px 20px 36px;color:#f7f7ff;font-family:Arial,sans-serif;" +
+            "background:radial-gradient(circle at 15% 10%,rgba(111,86,220,.45),transparent 38%)," +
+            "radial-gradient(circle at 90% 35%,rgba(29,150,170,.28),transparent 35%),linear-gradient(145deg,#090d1c,#19142f 55%,#081827)}" +
+            ".brand{font-size:12px;letter-spacing:4px;color:#b9b3ff;font-weight:bold;margin-top:12px}" +
+            "h1{font-size:34px;line-height:1.1;margin:12px 0 8px}.sub{color:#b8bfd3;font-size:14px;line-height:1.5}" +
+            ".glass{margin-top:26px;padding:20px;border:1px solid rgba(255,255,255,.18);border-radius:22px;" +
+            "background:rgba(255,255,255,.09);box-shadow:0 14px 38px rgba(0,0,0,.18)}" +
+            ".status{display:inline-block;padding:8px 12px;border-radius:30px;background:rgba(55,205,150,.15);color:#7ff0c2;font-size:11px;letter-spacing:1px;font-weight:bold}" +
+            ".grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}" +
+            "a.tile{display:block;text-decoration:none;color:white;padding:18px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);font-size:14px;font-weight:bold}" +
+            ".tile span{display:block;color:#aeb7d0;font-size:11px;font-weight:normal;margin-top:7px}" +
+            ".foot{margin-top:28px;text-align:center;color:#8993ae;font-size:11px}" +
+            "</style></head><body>" +
+            "<div class='brand'>KING BROWSER</div><h1>Your web.<br>Under your control.</h1>" +
+            "<div class='sub'>Fast, simple and private browsing with a clean glass-style interface.</div>" +
+            "<div class='glass'><div class='status'>" + status + "</div>" +
+            "<div style='font-size:18px;font-weight:bold;margin-top:15px'>Welcome back</div>" +
+            "<div class='sub' style='margin-top:6px'>Use the address bar above to search or open any website.</div></div>" +
+            "<div class='grid'>" +
+            "<a class='tile' href='https://www.google.com'>Google<span>Search the web</span></a>" +
+            "<a class='tile' href='https://www.youtube.com'>YouTube<span>Videos and music</span></a>" +
+            "<a class='tile' href='https://www.wikipedia.org'>Wikipedia<span>Explore knowledge</span></a>" +
+            "<a class='tile' href='https://www.instagram.com'>Instagram<span>Social updates</span></a>" +
+            "</div><div class='foot'>Tap the ⋮ button above for browser settings</div></body></html>";
+        webView.loadDataWithBaseURL(HOME_URL, html, "text/html", "UTF-8", null);
+    }
+
+    private void showSettings() {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(18), dp(8), dp(18), dp(8));
+        content.setBackgroundColor(Color.rgb(20, 23, 38));
+
+        TextView intro = new TextView(this);
+        intro.setText("Privacy and browser controls");
+        intro.setTextColor(Color.LTGRAY);
+        intro.setTextSize(13);
+        intro.setPadding(0, 0, 0, dp(12));
+        content.addView(intro);
+
+        Switch adBlock = new Switch(this);
+        adBlock.setText("Built-in AdBlock");
+        adBlock.setTextColor(Color.WHITE);
+        adBlock.setTextSize(16);
+        adBlock.setChecked(preferences.getBoolean(PREF_ADBLOCK, true));
+        content.addView(adBlock);
+
+        TextView adHint = settingHint("Blocks requests to common advertising domains. Enabled by default.");
+        content.addView(adHint);
+
+        Switch tracking = new Switch(this);
+        tracking.setText("Tracking protection");
+        tracking.setTextColor(Color.WHITE);
+        tracking.setTextSize(16);
+        tracking.setChecked(preferences.getBoolean(PREF_TRACKING, true));
+        LinearLayout.LayoutParams trackingParams = new LinearLayout.LayoutParams(-1, -2);
+        trackingParams.topMargin = dp(14);
+        content.addView(tracking, trackingParams);
+
+        content.addView(settingHint("Blocks requests to a small list of known tracking domains."));
+
+        TextView popup = new TextView(this);
+        popup.setText("Pop-up windows     ON");
+        popup.setTextColor(Color.WHITE);
+        popup.setTextSize(16);
+        popup.setPadding(0, dp(18), 0, dp(4));
+        content.addView(popup);
+        content.addView(settingHint("JavaScript-created secondary windows are blocked by default."));
+
+        TextView counter = new TextView(this);
+        counter.setText("Blocked requests this session: " + blockedRequests.get());
+        counter.setTextColor(Color.rgb(150, 225, 205));
+        counter.setTextSize(14);
+        counter.setPadding(0, dp(18), 0, dp(12));
+        content.addView(counter);
+
+        Button whitelist = makeButton(whitelistButtonLabel(), Color.rgb(65, 76, 112));
+        content.addView(whitelist, new LinearLayout.LayoutParams(-1, dp(46)));
+        whitelist.setOnClickListener(v -> {
+            String host = currentHost();
+            if (host == null) {
+                Toast.makeText(this, "Open a website first to manage its whitelist.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Set<String> sites = getWhitelist();
+            if (sites.contains(host)) sites.remove(host);
+            else sites.add(host);
+            preferences.edit().putStringSet(PREF_WHITELIST, sites).apply();
+            whitelist.setText(whitelistButtonLabel());
+            Toast.makeText(this, sites.contains(host) ? "Website added to whitelist" : "Website removed from whitelist", Toast.LENGTH_SHORT).show();
+        });
+
+        adBlock.setOnCheckedChangeListener((button, checked) -> {
+            preferences.edit().putBoolean(PREF_ADBLOCK, checked).apply();
+            adHint.setText(checked ? "AdBlock is ON. Common advertising domains are blocked." : "AdBlock is OFF.");
+            refreshCurrentPage();
+        });
+        tracking.setOnCheckedChangeListener((button, checked) -> {
+            preferences.edit().putBoolean(PREF_TRACKING, checked).apply();
+            refreshCurrentPage();
+        });
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.addView(content);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setTitle("KING BROWSER SETTINGS")
+            .setView(scroll)
+            .setPositiveButton("Done", null)
+            .create();
+        dialog.setOnShowListener(v -> {
+            dialog.getWindow().setBackgroundDrawable(rounded(Color.rgb(20, 23, 38), dp(20)));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.rgb(177, 157, 255));
+        });
+        dialog.show();
+    }
+
+    private String whitelistButtonLabel() {
+        String host = currentHost();
+        if (host == null) return "Allow ads on this website";
+        return isWhitelisted(host) ? "Remove " + host + " from whitelist" : "Allow ads on " + host;
+    }
+
+    private String currentHost() {
+        if (webView == null || webView.getUrl() == null) return null;
+        String host = Uri.parse(webView.getUrl()).getHost();
+        if (host == null || host.equals("kingbrowser.home")) return null;
+        return host.toLowerCase(Locale.ROOT);
+    }
+
+    private TextView settingHint(String value) {
+        TextView hint = new TextView(this);
+        hint.setText(value);
+        hint.setTextColor(Color.rgb(167, 174, 194));
+        hint.setTextSize(12);
+        hint.setPadding(0, dp(4), 0, dp(2));
+        return hint;
+    }
+
+    private void refreshCurrentPage() {
+        if (webView != null && webView.getUrl() != null && !webView.getUrl().equals(HOME_URL)) {
+            webView.reload();
+        } else if (webView != null) {
+            showHomePage();
+        }
     }
 
     private void loadAddress() {
@@ -166,14 +385,32 @@ public class MainActivity extends Activity {
         if (value.matches("^[a-zA-Z][a-zA-Z0-9+.-]*://.*")) {
             url = value;
         } else if (value.contains(" ") || !value.contains(".")) {
-            url = "https://www.google.com/search?q=" + android.net.Uri.encode(value);
+            url = "https://www.google.com/search?q=" + Uri.encode(value);
         } else {
             url = "https://" + value;
         }
         webView.loadUrl(url);
         addressBar.clearFocus();
-        ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
-            .hideSoftInputFromWindow(addressBar.getWindowToken(), 0);
+        InputMethodManager keyboard = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (keyboard != null) keyboard.hideSoftInputFromWindow(addressBar.getWindowToken(), 0);
+    }
+
+    private Button makeButton(String label, int color) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setTextColor(Color.WHITE);
+        button.setAllCaps(false);
+        button.setTextSize(13);
+        button.setBackground(rounded(color, dp(14)));
+        return button;
+    }
+
+    private GradientDrawable rounded(int color, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(radius);
+        drawable.setStroke(dp(1), Color.argb(35, 255, 255, 255));
+        return drawable;
     }
 
     private int dp(int value) {
