@@ -54,10 +54,15 @@ jobs:
         working-directory: lite-browser
         run: gradle --no-daemon :app:assembleDebug
 
+      - name: Rename APK for download
+        run: |
+          mkdir -p lite-browser/dist
+          cp lite-browser/app/build/outputs/apk/debug/app-debug.apk "lite-browser/dist/King browser light.apk"
+
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: KING-BROWSER-Lite-debug
-          path: lite-browser/app/build/outputs/apk/debug/app-debug.apk
+          name: King browser light
+          path: lite-browser/dist/King browser light.apk
           if-no-files-found: error
           retention-days: 14
