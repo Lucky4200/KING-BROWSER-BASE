@@ -38,7 +38,6 @@ public class MainActivity extends Activity {
         "pagead2.googlesyndication.com",
         "adnxs.com",
         "adsrvr.org",
-        " تبلیغات.ir",
         "taboola.com",
         "outbrain.com",
         "adform.net",
