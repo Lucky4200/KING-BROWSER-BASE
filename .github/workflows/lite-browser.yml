@@ -43,8 +43,12 @@ jobs:
       - name: Normalize Android image resource filenames
         run: |
           cd lite-browser/app/src/main/res/drawable-nodpi
-          mv Gemini_Generated_Image_9hvwof9hvwof9hvw.jpg king_browser_logo.jpg
-          mv Gemini_Generated_Image_h4lvohh4lvohh4lv.jpg king_browser_background.jpg
+          if [ -f "king browser .jpg" ]; then mv "king browser .jpg" king_browser_logo.jpg; fi
+          if [ -f "king browser.jpg" ]; then mv "king browser.jpg" king_browser_background.jpg; fi
+          if [ -f "Gemini_Generated_Image_9hvwof9hvwof9hvw.jpg" ]; then mv Gemini_Generated_Image_9hvwof9hvwof9hvw.jpg king_browser_logo.jpg; fi
+          if [ -f "Gemini_Generated_Image_h4lvohh4lvohh4lv.jpg" ]; then mv Gemini_Generated_Image_h4lvohh4lvohh4lv.jpg king_browser_background.jpg; fi
+          test -f king_browser_logo.jpg
+          test -f king_browser_background.jpg
 
       - name: Build debug APK
         working-directory: lite-browser
