@@ -89,3 +89,4 @@ jobs:
           fail_on_unmatched_files: true
 
 # Trigger a fresh ARM64 build after signing secrets were configured.
+# Fresh dispatch-equivalent push: keep build configuration and browser features unchanged.
