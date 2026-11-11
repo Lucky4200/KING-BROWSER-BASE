@@ -118,7 +118,7 @@ public class TvChannelsActivity extends Activity {
                             int comma = line.lastIndexOf(',');
                             name = comma >= 0 ? line.substring(comma + 1).trim() : "Live channel";
                         } else if (!line.isEmpty() && !line.startsWith("#") && name != null) {
-                            if ((line.startsWith("https://") || line.startsWith("http://")) && seenUrls.add(line)) {\n                                parsed.add(new Channel(name, line));\n                            }
+                            if (line.startsWith("https://") && seenUrls.add(line)) {\n                                parsed.add(new Channel(name, line));\n                            }
                             name = null;
                         }
                     }
