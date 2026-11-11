@@ -159,8 +159,9 @@ public class MainActivity extends Activity {
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                String host = request.getUrl().getHost();
-                if (isBlockedHost(host)) {
+                Uri requestUri = request.getUrl();
+                String host = requestUri.getHost();
+                if (isBlockedHost(host) || isBlockedAdUrl(requestUri)) {
                     blockedRequests.incrementAndGet();
                     return new WebResourceResponse(
                         "text/plain", "UTF-8", 204, "No Content",
@@ -178,6 +179,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
+                injectYouTubeAdControls(view, url);
                 if (HOME_URL.equals(url) || url.startsWith("data:text/html")) {
                     addressBar.setText("");
                 } else {
@@ -220,8 +222,41 @@ public class MainActivity extends Activity {
     private boolean isBlockedHost(String host) {
         if (host == null || isWhitelisted(host)) return false;
         String normalized = host.toLowerCase(Locale.ROOT);
+        // YouTube shares media hosts between ads and normal playback; never block them wholesale.
+        if (isYouTubeCoreHost(normalized)) return false;
         if (preferences.getBoolean(PREF_ADBLOCK, true) && (matchesHost(normalized, AD_HOSTS) || AdBlockList.blocks(normalized))) return true;
         return preferences.getBoolean(PREF_TRACKING, true) && matchesHost(normalized, TRACKER_HOSTS);
+    }
+
+    private boolean isYouTubeCoreHost(String host) {
+        return host.equals("youtube.com") || host.endsWith(".youtube.com") ||
+                host.equals("googlevideo.com") || host.endsWith(".googlevideo.com") ||
+                host.equals("ytimg.com") || host.endsWith(".ytimg.com");
+    }
+
+    private boolean isBlockedAdUrl(Uri uri) {
+        if (!preferences.getBoolean(PREF_ADBLOCK, true) || uri == null) return false;
+        String host = uri.getHost();
+        String path = uri.getPath();
+        if (host == null || path == null) return false;
+        host = host.toLowerCase(Locale.ROOT);
+        if ((host.equals("youtube.com") || host.endsWith(".youtube.com")) &&
+                (path.startsWith("/pagead/") || path.startsWith("/api/stats/ads") ||
+                 path.startsWith("/ptracking"))) return true;
+        return host.equals("googleads.g.doubleclick.net") && path.startsWith("/pagead/");
+    }
+
+    private void injectYouTubeAdControls(WebView view, String url) {
+        if (url == null || !(url.contains("youtube.com") || url.contains("youtube-nocookie.com"))) return;
+        String script = "(function(){if(window.__kingYtAdHelper)return;window.__kingYtAdHelper=true;" +
+                "var skip=function(){try{" +
+                "document.querySelectorAll('.ytp-ad-skip-button,.ytp-ad-skip-button-modern,button.ytp-ad-skip-button').forEach(function(b){if(b.offsetParent!==null)b.click();});" +
+                "document.querySelectorAll('.ytp-ad-overlay-close-button').forEach(function(b){if(b.offsetParent!==null)b.click();});" +
+                "}catch(e){}};" +
+                "new MutationObserver(skip).observe(document.documentElement,{childList:true,subtree:true,attributes:true});" +
+                "skip();window.setInterval(skip,900);" +
+                "})();";
+        view.evaluateJavascript(script, null);
     }
 
     private boolean matchesHost(String host, Set<String> domains) {
