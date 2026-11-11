@@ -14,10 +14,13 @@ import android.widget.Toast;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
+import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
-import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.ui.PlayerView;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class TvPlayerActivity extends Activity {
     private ExoPlayer player;
@@ -25,58 +28,80 @@ public class TvPlayerActivity extends Activity {
     private TextView errorLabel;
     private String streamUrl;
     private String channelName;
+    private final HashMap<String, String> streamHeaders = new HashMap<>();
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        CrashLog.install(getApplicationContext());
         CrashLog.write(getApplicationContext(), "TV player onCreate");
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        getWindow().getDecorView().setBackgroundColor(Color.BLACK);
-        streamUrl = getIntent().getStringExtra("stream_url");
-        channelName = getIntent().getStringExtra("channel_name");
+        try {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            getWindow().getDecorView().setBackgroundColor(Color.BLACK);
+            streamUrl = getIntent().getStringExtra("stream_url");
+            channelName = getIntent().getStringExtra("channel_name");
+            Bundle suppliedHeaders = getIntent().getBundleExtra("stream_headers");
+            if (suppliedHeaders != null) {
+                for (String key : suppliedHeaders.keySet()) {
+                    String value = suppliedHeaders.getString(key);
+                    if (value != null && value.length() <= 2048 &&
+                            ("User-Agent".equalsIgnoreCase(key) || "Referer".equalsIgnoreCase(key) ||
+                             "Origin".equalsIgnoreCase(key))) {
+                        streamHeaders.put(key, value);
+                    }
+                }
+            }
 
-        FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
-        playerView = new PlayerView(this);
-        playerView.setUseController(true);
-        playerView.setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS);
-        playerView.setControllerAutoShow(true);
-        root.addView(playerView, new FrameLayout.LayoutParams(-1, -1));
+            FrameLayout root = new FrameLayout(this);
+            root.setBackgroundColor(Color.BLACK);
+            playerView = new PlayerView(this);
+            playerView.setUseController(true);
+            playerView.setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS);
+            playerView.setControllerAutoShow(true);
+            root.addView(playerView, new FrameLayout.LayoutParams(-1, -1));
 
-        errorLabel = new TextView(this);
-        errorLabel.setTextColor(Color.WHITE);
-        errorLabel.setTextSize(16);
-        errorLabel.setGravity(android.view.Gravity.CENTER);
-        errorLabel.setPadding(32, 24, 32, 24);
-        errorLabel.setBackgroundColor(0xCC101322);
-        errorLabel.setVisibility(View.GONE);
-        root.addView(errorLabel, new FrameLayout.LayoutParams(-1, -2, android.view.Gravity.CENTER));
+            errorLabel = new TextView(this);
+            errorLabel.setTextColor(Color.WHITE);
+            errorLabel.setTextSize(16);
+            errorLabel.setGravity(android.view.Gravity.CENTER);
+            errorLabel.setPadding(32, 24, 32, 24);
+            errorLabel.setBackgroundColor(0xCC101322);
+            errorLabel.setVisibility(View.GONE);
+            root.addView(errorLabel, new FrameLayout.LayoutParams(-1, -2, android.view.Gravity.CENTER));
 
-        TextView title = new TextView(this);
-        title.setText(channelName == null ? "KING LIVE TV" : channelName);
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(14);
-        title.setPadding(18, 12, 18, 12);
-        title.setBackgroundColor(0x99000000);
-        root.addView(title, new FrameLayout.LayoutParams(-1, -2,
-                android.view.Gravity.TOP | android.view.Gravity.START));
+            TextView title = new TextView(this);
+            title.setText(channelName == null ? "KING LIVE TV" : channelName);
+            title.setTextColor(Color.WHITE);
+            title.setTextSize(14);
+            title.setPadding(18, 12, 18, 12);
+            title.setBackgroundColor(0x99000000);
+            root.addView(title, new FrameLayout.LayoutParams(-1, -2,
+                    android.view.Gravity.TOP | android.view.Gravity.START));
 
-        setContentView(root);
-        enterImmersiveMode();
-        if (streamUrl == null || !(streamUrl.startsWith("https://") || streamUrl.startsWith("http://"))) {
-            showError("Invalid channel stream URL.");
-            return;
+            setContentView(root);
+            enterImmersiveMode();
+            if (streamUrl == null || !(streamUrl.startsWith("https://") || streamUrl.startsWith("http://"))) {
+                showError("Invalid channel stream URL.");
+                return;
+            }
+            startStream();
+        } catch (Throwable error) {
+            CrashLog.write(getApplicationContext(), "TV player screen initialization failed", error);
+            Toast.makeText(this, "TV player could not initialize. Diagnostic log saved.", Toast.LENGTH_LONG).show();
+            finish();
         }
-        startStream();
     }
 
     private void startStream() {
         releasePlayer();
-        errorLabel.setVisibility(View.GONE);
+        if (errorLabel != null) errorLabel.setVisibility(View.GONE);
         try {
+            HashMap<String, String> requestHeaders = new HashMap<>(streamHeaders);
+            requestHeaders.putIfAbsent("User-Agent", "KING-BROWSER-Lite/1.2 (Android)");
             DefaultHttpDataSource.Factory httpFactory = new DefaultHttpDataSource.Factory()
-                    .setUserAgent("KING-BROWSER-Lite/1.1 (Android)")
-                    .setConnectTimeoutMs(15000)
-                    .setReadTimeoutMs(20000)
+                    .setUserAgent(requestHeaders.remove("User-Agent"))
+                    .setDefaultRequestProperties(requestHeaders)
+                    .setConnectTimeoutMs(12000)
+                    .setReadTimeoutMs(15000)
                     .setAllowCrossProtocolRedirects(true);
             player = new ExoPlayer.Builder(this)
                     .setMediaSourceFactory(new DefaultMediaSourceFactory(httpFactory))
@@ -88,7 +113,7 @@ public class TvPlayerActivity extends Activity {
                     showError("This channel could not play (" + error.getErrorCodeName() + ").\nTry another channel.");
                 }
                 @Override public void onPlaybackStateChanged(int state) {
-                    if (state == Player.STATE_BUFFERING) errorLabel.setVisibility(View.GONE);
+                    if (state == Player.STATE_BUFFERING && errorLabel != null) errorLabel.setVisibility(View.GONE);
                 }
             });
             MediaItem item = new MediaItem.Builder().setUri(Uri.parse(streamUrl)).build();
