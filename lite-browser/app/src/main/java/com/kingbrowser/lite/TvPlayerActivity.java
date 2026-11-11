@@ -165,6 +165,13 @@ public class TvPlayerActivity extends Activity {
         super.onPause();
     }
 
+    @Override protected void onResume() {
+        super.onResume();
+        if (player != null && player.getPlaybackState() != Player.STATE_ENDED) {
+            player.play();
+        }
+    }
+
     @Override protected void onDestroy() {
         releasePlayer();
         super.onDestroy();
