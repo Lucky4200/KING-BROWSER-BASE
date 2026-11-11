@@ -142,12 +142,15 @@ final class AdBlockList {
         String rule = exception ? value.substring(2) : value;
         if (!rule.startsWith("||")) return null;
         String domain = rule.substring(2);
-        int end = domain.length();
-        for (char marker : new char[]{'^', '$', '/', '*', '|', '?'}) {
-            int at = domain.indexOf(marker);
-            if (at >= 0 && at < end) end = at;
+        // Only accept host-wide rules. Do not truncate path-specific rules such as
+        // ||youtube.com/pagead/... into a rule that blocks the entire youtube.com host.
+        int separator = domain.indexOf('^');
+        if (separator >= 0) {
+            domain = domain.substring(0, separator);
+        } else if (domain.contains("/") || domain.contains("*") ||
+                domain.contains("$") || domain.contains("|") || domain.contains("?")) {
+            return null;
         }
-        domain = domain.substring(0, end);
         if (!validDomain(domain)) return null;
         return exception ? "@@" + domain : domain;
     }
