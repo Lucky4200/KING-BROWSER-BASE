@@ -9,7 +9,7 @@
         android:roundIcon="@drawable/king_browser_launcher"
         android:banner="@drawable/king_browser_tv_banner"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
-        android:usesCleartextTraffic="false">
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".TvPlayerActivity"
             android:exported="false"
