@@ -47,7 +47,7 @@ jobs:
           # Keep the supplied originals and create the exact resource names used by the app.
           if [ -f "icon.jpg" ]; then cp "icon.jpg" king_browser_logo.jpg; fi
           if [ -f "backround.jpg" ]; then cp "backround.jpg" king_browser_background.jpg; fi
-          if [ -f "tv backround.jpg" ]; then cp "tv backround.jpg" king_browser_tv_background.jpg; fi
+          if [ -f "tv backround.jpg" ]; then cp "tv backround.jpg" king_browser_tv_background.jpg; rm "tv backround.jpg"; fi
           # Backward compatibility with earlier asset names.
           if [ ! -f king_browser_logo.jpg ] && [ -f "king browser.jpg" ]; then cp "king browser.jpg" king_browser_logo.jpg; fi
           if [ ! -f king_browser_background.jpg ] && [ -f "king browser .jpg" ]; then cp "king browser .jpg" king_browser_background.jpg; fi
