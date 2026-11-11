@@ -342,7 +342,7 @@ public class MainActivity extends Activity {
     private void showHomePage() {
         boolean adBlockOn = preferences.getBoolean(PREF_ADBLOCK, true);
         String status = adBlockOn ? "AD BLOCK IS ON" : "AD BLOCK IS OFF";
-        String backgroundImage = loadImageDataUri("king_browser_background");
+        String backgroundImage = loadImageDataUri("king_browser_blue_background");
         String html = "<!doctype html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'>" +
             "<style>" +
             "*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:28px 20px 36px;color:#f7f7ff;font-family:Arial,sans-serif;" +
