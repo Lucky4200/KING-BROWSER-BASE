@@ -7,14 +7,13 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:1.5.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.5.1")
     implementation("androidx.media3:media3-ui:1.5.1")
-    // This build targets the user's ARM64 Android phone instead of bundling
-    // every GeckoView ABI into one oversized universal APK.
-    implementation("org.mozilla.geckoview:geckoview-omni-arm64-v8a:159.0.20261102144711")
+    // ARM64-only GeckoView avoids bundling unused CPU architectures.
+    implementation("org.mozilla.geckoview:geckoview-omni-arm64-v8a:138.0.20250517143237")
 }
 
 android {
     namespace = "com.kingbrowser.lite"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.kingbrowser.lite"
