@@ -40,15 +40,20 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Normalize Android image resource filenames
+      - name: Prepare Android image resources
         run: |
+          set -e
           cd lite-browser/app/src/main/res/drawable-nodpi
-          if [ -f "king browser .jpg" ]; then mv "king browser .jpg" king_browser_background.jpg; fi
-          if [ -f "king browser.jpg" ]; then mv "king browser.jpg" king_browser_logo.jpg; fi
-          if [ -f "Gemini_Generated_Image_9hvwof9hvwof9hvw.jpg" ]; then mv Gemini_Generated_Image_9hvwof9hvwof9hvw.jpg king_browser_background.jpg; fi
-          if [ -f "Gemini_Generated_Image_h4lvohh4lvohh4lv.jpg" ]; then mv Gemini_Generated_Image_h4lvohh4lvohh4lv.jpg king_browser_logo.jpg; fi
-          test -f king_browser_logo.jpg
-          test -f king_browser_background.jpg
+          # Keep the supplied originals and create the exact resource names used by the app.
+          if [ -f "icon.jpg" ]; then cp "icon.jpg" king_browser_logo.jpg; fi
+          if [ -f "backround.jpg" ]; then cp "backround.jpg" king_browser_background.jpg; fi
+          # Backward compatibility with earlier asset names.
+          if [ ! -f king_browser_logo.jpg ] && [ -f "king browser.jpg" ]; then cp "king browser.jpg" king_browser_logo.jpg; fi
+          if [ ! -f king_browser_background.jpg ] && [ -f "king browser .jpg" ]; then cp "king browser .jpg" king_browser_background.jpg; fi
+          if [ ! -f king_browser_background.jpg ] && [ -f "Gemini_Generated_Image_9hvwof9hvwof9hvw.jpg" ]; then cp Gemini_Generated_Image_9hvwof9hvwof9hvw.jpg king_browser_background.jpg; fi
+          if [ ! -f king_browser_logo.jpg ] && [ -f "Gemini_Generated_Image_h4lvohh4lvohh4lv.jpg" ]; then cp Gemini_Generated_Image_h4lvohh4lvohh4lv.jpg king_browser_logo.jpg; fi
+          test -s king_browser_logo.jpg
+          test -s king_browser_background.jpg
 
       - name: Build debug APK
         working-directory: lite-browser
