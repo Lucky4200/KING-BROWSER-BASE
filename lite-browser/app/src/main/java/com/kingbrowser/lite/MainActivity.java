@@ -83,6 +83,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         preferences = getSharedPreferences(PREFS, MODE_PRIVATE);
+        AdBlockList.initialize(getApplicationContext());
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -219,7 +220,7 @@ public class MainActivity extends Activity {
     private boolean isBlockedHost(String host) {
         if (host == null || isWhitelisted(host)) return false;
         String normalized = host.toLowerCase(Locale.ROOT);
-        if (preferences.getBoolean(PREF_ADBLOCK, true) && matchesHost(normalized, AD_HOSTS)) return true;
+        if (preferences.getBoolean(PREF_ADBLOCK, true) && (matchesHost(normalized, AD_HOSTS) || AdBlockList.blocks(normalized))) return true;
         return preferences.getBoolean(PREF_TRACKING, true) && matchesHost(normalized, TRACKER_HOSTS);
     }
 
