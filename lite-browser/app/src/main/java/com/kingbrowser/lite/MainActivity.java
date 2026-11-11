@@ -254,11 +254,15 @@ public class MainActivity extends Activity {
         String path = uri.getPath();
         if (host == null || path == null) return false;
         host = host.toLowerCase(Locale.ROOT);
-        // Do not cancel YouTube API/page requests; it causes playback and sign-in errors.
+        // Block known YouTube ad/tracking endpoints before allowing the rest of
+        // YouTube's core hosts. The previous early return made this rule unreachable.
+        boolean youtubeHost = host.equals("youtube.com") || host.endsWith(".youtube.com");
+        if (youtubeHost && (path.startsWith("/pagead/") ||
+                path.startsWith("/api/stats/ads") || path.startsWith("/ptracking"))) {
+            return true;
+        }
+        // Keep playback, thumbnails, sign-in and media requests intact.
         if (isYouTubeCoreHost(host)) return false;
-        if ((host.equals("youtube.com") || host.endsWith(".youtube.com")) &&
-                (path.startsWith("/pagead/") || path.startsWith("/api/stats/ads") ||
-                 path.startsWith("/ptracking"))) return true;
         return host.equals("googleads.g.doubleclick.net") && path.startsWith("/pagead/");
     }
 
