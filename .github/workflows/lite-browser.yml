@@ -44,17 +44,17 @@ jobs:
         run: |
           set -e
           cd lite-browser/app/src/main/res/drawable-nodpi
-          # Keep the supplied originals and create the exact resource names used by the app.
-          if [ -f "icon.jpg" ]; then cp "icon.jpg" king_browser_logo.jpg; fi
-          if [ -f "backround.jpg" ]; then cp "backround.jpg" king_browser_background.jpg; fi
-          if [ -f "tv backround.jpg" ]; then cp "tv backround.jpg" king_browser_tv_background.jpg; rm "tv backround.jpg"; fi
-          # Backward compatibility with earlier asset names.
-          if [ ! -f king_browser_logo.jpg ] && [ -f "king browser.jpg" ]; then cp "king browser.jpg" king_browser_logo.jpg; fi
-          if [ ! -f king_browser_background.jpg ] && [ -f "king browser .jpg" ]; then cp "king browser .jpg" king_browser_background.jpg; fi
-          if [ ! -f king_browser_background.jpg ] && [ -f "Gemini_Generated_Image_9hvwof9hvwof9hvw.jpg" ]; then cp Gemini_Generated_Image_9hvwof9hvwof9hvw.jpg king_browser_background.jpg; fi
-          if [ ! -f king_browser_logo.jpg ] && [ -f "Gemini_Generated_Image_h4lvohh4lvohh4lv.jpg" ]; then cp Gemini_Generated_Image_h4lvohh4lvohh4lv.jpg king_browser_logo.jpg; fi
-          test -s king_browser_logo.jpg
-          test -s king_browser_background.jpg
+          # The current uploaded assets are PNG files; preserve their original formats.
+          test -s king_browser_lite_icon_transparent_512.png
+          test -s king_browser_background.png
+          cp king_browser_lite_icon_transparent_512.png king_browser_logo.png
+          # Keep the separate TV artwork under a valid Android resource name.
+          if [ -f "tv backround.jpg" ]; then
+            cp "tv backround.jpg" king_browser_tv_background.jpg
+            rm "tv backround.jpg"
+          fi
+          test -s king_browser_logo.png
+          test -s king_browser_background.png
           test -s king_browser_tv_background.jpg
 
       - name: Build debug APK
