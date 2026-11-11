@@ -285,24 +285,36 @@ public class MainActivity extends Activity {
 
     private void injectYouTubeAdControls(WebView view, String url) {
         if (url == null || !(url.contains("youtube.com") || url.contains("youtube-nocookie.com"))) return;
-        // Re-inject after navigation without creating duplicate observers/timers in the same document.
-        String script = "(function(){if(window.__kingYtAdHelper)return;window.__kingYtAdHelper=true;" +
-                "var style=document.createElement('style');" +
-                "style.textContent='.ad-showing .video-ads,.ytp-ad-module,.ytp-ad-overlay-container,.ytp-ad-text,.ytp-ad-image-overlay,#player-ads,ytd-ad-slot-renderer,ytd-promoted-sparkles-web-renderer,ytd-display-ad-renderer,ytm-promoted-sparkles-web-renderer,ytm-companion-ad-renderer{display:none!important}';" +
-                "(document.head||document.documentElement).appendChild(style);" +
+        // User-provided YouTube ad helper: hide ad containers, seek active video ads
+        // to their end, click Skip when available, and close overlay ads.
+        // Re-injection is safe: one observer and one timer per document.
+        String script = "(function(){" +
+                "if(window.__adBlockOn)return;window.__adBlockOn=true;" +
+                "var css='.video-ads,.ytp-ad-module,.ytp-ad-overlay-container,.ytp-ad-text,.ytp-ad-image-overlay,#player-ads,ytd-ad-slot-renderer,ytd-promoted-sparkles-web-renderer,ytd-display-ad-renderer,ytm-promoted-sparkles-web-renderer,ytm-companion-ad-renderer{display:none!important}';" +
+                "var style=document.createElement('style');style.textContent=css;(document.head||document.documentElement).appendChild(style);" +
                 "var handle=function(){try{" +
                 "var player=document.querySelector('.html5-video-player');" +
                 "var video=document.querySelector('video');" +
                 "var showing=!!(player&&player.classList.contains('ad-showing'));" +
-                "if(video&&showing){if(typeof video.__kingWasMuted==='undefined')video.__kingWasMuted=video.muted;video.muted=true;}" +
-                "else if(video&&typeof video.__kingWasMuted!=='undefined'){video.muted=video.__kingWasMuted;delete video.__kingWasMuted;}" +
-                "var buttons=document.querySelectorAll('.ytp-ad-skip-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button-container button,.ytp-ad-skip-button-slot button,.ytp-skip-ad-button');" +
-                "buttons.forEach(function(b){if(b&&b.offsetParent!==null&&!b.disabled)b.click();});" +
+                "if(video&&showing){" +
+                "if(typeof video.__kingWasMuted==='undefined')video.__kingWasMuted=video.muted;" +
+                "video.muted=true;" +
+                "if(Number.isFinite(video.duration)&&video.duration>0&&video.currentTime<video.duration){" +
+                "try{video.currentTime=video.duration;}catch(seekError){}" +
+                "}" +
+                "}else if(video&&typeof video.__kingWasMuted!=='undefined'){" +
+                "video.muted=video.__kingWasMuted;delete video.__kingWasMuted;" +
+                "if(video.paused){var playAttempt=video.play();if(playAttempt&&playAttempt.catch)playAttempt.catch(function(){});}" +
+                "}" +
+                "var skips=document.querySelectorAll('.ytp-ad-skip-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button-container button,.ytp-ad-skip-button-slot button,.ytp-skip-ad-button');" +
+                "skips.forEach(function(b){if(b&&b.offsetParent!==null&&!b.disabled)b.click();});" +
                 "document.querySelectorAll('.ytp-ad-overlay-close-button,.ytp-ad-overlay-close-button button').forEach(function(b){if(b&&b.offsetParent!==null)b.click();});" +
                 "}catch(e){}};" +
                 "var observer=new MutationObserver(handle);" +
                 "if(document.documentElement)observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true});" +
-                "handle();window.setInterval(handle,400);" +
+                "document.addEventListener('yt-navigate-finish',handle,true);" +
+                "window.addEventListener('popstate',handle,true);" +
+                "handle();window.setInterval(handle,300);" +
                 "})();";
         view.evaluateJavascript(script, null);
     }
