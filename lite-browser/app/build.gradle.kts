@@ -6,7 +6,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.5.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.5.1")
     implementation("androidx.media3:media3-ui:1.5.1")
-    implementation("org.mozilla.geckoview:geckoview:159.0.20261102144711")
+    implementation("org.mozilla.geckoview:geckoview:131.0.20241008210941")
 }
 
 android {
