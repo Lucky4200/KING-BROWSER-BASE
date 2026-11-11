@@ -20,7 +20,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;\nimport java.util.HashSet;\nimport java.util.Set;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -102,7 +104,8 @@ public class TvChannelsActivity extends Activity {
         channelList.removeAllViews();
         status.setText("Loading channel list…");
         worker.execute(() -> {
-            ArrayList<Channel> parsed = new ArrayList<>();\n            Set<String> seenUrls = new HashSet<>();
+            ArrayList<Channel> parsed = new ArrayList<>();
+            Set<String> seenUrls = new HashSet<>();
             HttpURLConnection connection = null;
             try {
                 connection = (HttpURLConnection) new URL(BASE + code + ".m3u").openConnection();
@@ -113,12 +116,15 @@ public class TvChannelsActivity extends Activity {
                      BufferedReader reader = new BufferedReader(new InputStreamReader(input, "UTF-8"))) {
                     String line, name = null;
                     while ((line = reader.readLine()) != null) {
-                        line = line.trim();\n                        if (line.startsWith("\\uFEFF")) line = line.substring(1);
+                        line = line.trim();
+                        if (line.startsWith("\uFEFF")) line = line.substring(1);
                         if (line.startsWith("#EXTINF")) {
                             int comma = line.lastIndexOf(',');
                             name = comma >= 0 ? line.substring(comma + 1).trim() : "Live channel";
                         } else if (!line.isEmpty() && !line.startsWith("#") && name != null) {
-                            if (line.startsWith("https://") && seenUrls.add(line)) {\n                                parsed.add(new Channel(name, line));\n                            }
+                            if (line.startsWith("https://") && seenUrls.add(line)) {
+                                parsed.add(new Channel(name, line));
+                            }
                             name = null;
                         }
                     }
