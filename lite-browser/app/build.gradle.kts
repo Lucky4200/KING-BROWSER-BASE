@@ -16,8 +16,8 @@ android {
         applicationId = "com.kingbrowser.lite"
         minSdk = 23
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.3-lite"
+        versionCode = 5
+        versionName = "1.4-lite"
     }
 
     buildTypes {
