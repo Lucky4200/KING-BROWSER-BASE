@@ -48,6 +48,7 @@ public class TvChannelsActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        CrashLog.write(getApplicationContext(), "TV channels screen opened");
         getWindow().getDecorView().setBackgroundColor(Color.rgb(9, 13, 28));
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -142,7 +143,8 @@ public class TvChannelsActivity extends Activity {
                 if (isFinishing() || !selectedCode.equals(code)) return;
                 channelList.removeAllViews();
                 if (result.isEmpty()) {
-                    status.setText("No HTTPS streams are currently listed for this country. Try another country or refresh later.");
+                    status.setText("Channel list unavailable. Check internet and tap another country to retry.");
+                    CrashLog.write(getApplicationContext(), "TV playlist returned zero playable entries for " + code);
                     return;
                 }
                 status.setText("Showing " + result.size() +
@@ -160,7 +162,13 @@ public class TvChannelsActivity extends Activity {
                         Intent intent = new Intent(this, TvPlayerActivity.class);
                         intent.putExtra("stream_url", channel.url);
                         intent.putExtra("channel_name", channel.name);
-                        startActivity(intent);
+                        try {
+                            CrashLog.write(getApplicationContext(), "Opening TV player: " + channel.name + " " + channel.url);
+                            startActivity(intent);
+                        } catch (Exception error) {
+                            CrashLog.write(getApplicationContext(), "Could not open TV player activity", error);
+                            Toast.makeText(this, "TV player could not open. Diagnostic log saved.", Toast.LENGTH_LONG).show();
+                        }
                     });
                 }
             });
