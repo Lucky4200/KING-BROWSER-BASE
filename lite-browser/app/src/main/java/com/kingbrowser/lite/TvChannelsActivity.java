@@ -253,7 +253,11 @@ public class TvChannelsActivity extends Activity {
     @Override protected void onDestroy() {
         destroyed = true;
         loadGeneration.incrementAndGet();
-        worker.shutdownNow();
+        try {
+            worker.shutdownNow();
+        } catch (RuntimeException error) {
+            CrashLog.write(getApplicationContext(), "TV channel worker shutdown failed", error);
+        }
         super.onDestroy();
     }
 }
