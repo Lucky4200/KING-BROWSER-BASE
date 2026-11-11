@@ -270,11 +270,18 @@ public class MainActivity extends Activity {
         if (url == null || !(url.contains("youtube.com") || url.contains("youtube-nocookie.com"))) return;
         String script = "(function(){if(window.__kingYtAdHelper)return;window.__kingYtAdHelper=true;" +
                 "var skip=function(){try{" +
-                "document.querySelectorAll('.ytp-ad-skip-button,.ytp-ad-skip-button-modern,button.ytp-ad-skip-button').forEach(function(b){if(b.offsetParent!==null)b.click();});" +
-                "document.querySelectorAll('.ytp-ad-overlay-close-button').forEach(function(b){if(b.offsetParent!==null)b.click();});" +
+                "var buttons=document.querySelectorAll('.ytp-ad-skip-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button-container button,.ytp-ad-skip-button-slot button,button.ytp-ad-skip-button');" +
+                "buttons.forEach(function(b){if(b&&b.offsetParent!==null&&!b.disabled)b.click();});" +
+                "document.querySelectorAll('.ytp-ad-overlay-close-button,.ytp-ad-overlay-close-button button').forEach(function(b){if(b&&b.offsetParent!==null)b.click();});" +
+                "var player=document.querySelector('.html5-video-player');" +
+                "if(player&&player.classList.contains('ad-showing')){" +
+                "var skipNow=player.querySelector('.ytp-ad-skip-button,.ytp-ad-skip-button-modern');" +
+                "if(skipNow&&skipNow.offsetParent!==null&&!skipNow.disabled)skipNow.click();" +
+                "}" +
                 "}catch(e){}};" +
-                "new MutationObserver(skip).observe(document.documentElement,{childList:true,subtree:true,attributes:true});" +
-                "skip();window.setInterval(skip,900);" +
+                "var observer=new MutationObserver(skip);" +
+                "if(document.documentElement)observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true});" +
+                "skip();window.setInterval(skip,500);" +
                 "})();";
         view.evaluateJavascript(script, null);
     }
