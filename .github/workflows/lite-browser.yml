@@ -17,9 +17,9 @@ concurrency:
 
 jobs:
   build:
-    name: Build lightweight Android WebView APK
+    name: Build ARM64 Android APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,12 +33,12 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '8.11.1'
 
       - name: Download and prepare uBlock Origin Firefox extension
         run: |
@@ -51,15 +51,25 @@ jobs:
           unzip -q /tmp/ublock-origin.xpi -d "$ASSETS"
           test -s "$ASSETS/manifest.json"
           grep -q "uBlock0@raymondhill.net" "$ASSETS/manifest.json"
+
       - name: Verify uploaded Android image resources
         run: |
           set -e
           RES="lite-browser/app/src/main/res/drawable-nodpi"
           test -s "$RES/king_browser_lite_icon_transparent_512.png"
           test -s "$RES/king_browser_background.png"
-      - name: Build debug APK
+
+      - name: Build ARM64 debug APK
         working-directory: lite-browser
         run: gradle --no-daemon :app:assembleDebug
+
+      - name: Verify APK ABI and package
+        run: |
+          set -euo pipefail
+          APK="lite-browser/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -q "package: name='com.kingbrowser.lite.debug'"
+          unzip -l "$APK" | grep -q "lib/arm64-v8a/"
 
       - name: Rename APK for download
         run: |
@@ -69,7 +79,7 @@ jobs:
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: King browser lite
+          name: King browser lite ARM64
           path: lite-browser/dist/King browser lite.apk
           if-no-files-found: error
           retention-days: 14
