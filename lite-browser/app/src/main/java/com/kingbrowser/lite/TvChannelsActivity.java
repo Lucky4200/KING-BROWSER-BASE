@@ -28,6 +28,8 @@ import java.util.concurrent.Executors;
 
 public class TvChannelsActivity extends Activity {
     private static final String BASE = "https://iptv-org.github.io/iptv/countries/";
+    // Keep the Lite UI bounded: country playlists can contain thousands of entries.
+    private static final int MAX_CHANNELS = 100;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private LinearLayout channelList;
     private TextView status;
@@ -122,8 +124,10 @@ public class TvChannelsActivity extends Activity {
                             int comma = line.lastIndexOf(',');
                             name = comma >= 0 ? line.substring(comma + 1).trim() : "Live channel";
                         } else if (!line.isEmpty() && !line.startsWith("#") && name != null) {
-                            if (line.startsWith("https://") && seenUrls.add(line)) {
+                            if ((line.startsWith("https://") || line.startsWith("http://")) &&
+                                    seenUrls.add(line)) {
                                 parsed.add(new Channel(name, line));
+                                if (parsed.size() >= MAX_CHANNELS) break;
                             }
                             name = null;
                         }
@@ -141,7 +145,9 @@ public class TvChannelsActivity extends Activity {
                     status.setText("No HTTPS streams are currently listed for this country. Try another country or refresh later.");
                     return;
                 }
-                status.setText(result.size() + " available HTTPS stream entries • Live availability may vary");
+                status.setText("Showing " + result.size() +
+                        (result.size() >= MAX_CHANNELS ? " channels (Lite limit)" : " available channels") +
+                        " • Live availability may vary");
                 for (Channel channel : result) {
                     Button item = button("▶   " + channel.name);
                     item.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
