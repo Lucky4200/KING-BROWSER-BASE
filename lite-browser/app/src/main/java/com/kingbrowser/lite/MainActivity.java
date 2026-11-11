@@ -172,6 +172,11 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String requestedUrl = request.getUrl().toString();
+                if (isYouTubeUrl(requestedUrl)) {
+                    openYouTube(requestedUrl);
+                    return true;
+                }
                 return false;
             }
 
@@ -545,10 +550,34 @@ public class MainActivity extends Activity {
         } else {
             url = "https://" + value;
         }
-        webView.loadUrl(url);
+        if (isYouTubeUrl(url)) {
+            openYouTube(url);
+        } else {
+            webView.loadUrl(url);
+        }
         addressBar.clearFocus();
         InputMethodManager keyboard = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if (keyboard != null) keyboard.hideSoftInputFromWindow(addressBar.getWindowToken(), 0);
+    }
+
+    private boolean isYouTubeUrl(String value) {
+        if (value == null) return false;
+        Uri uri = Uri.parse(value);
+        String host = uri.getHost();
+        return host != null && (host.equalsIgnoreCase("youtube.com") ||
+                host.toLowerCase(Locale.ROOT).endsWith(".youtube.com") ||
+                host.equalsIgnoreCase("youtu.be"));
+    }
+
+    private void openYouTube(String url) {
+        try {
+            Intent intent = new Intent(MainActivity.this, GeckoYoutubeActivity.class);
+            intent.putExtra(GeckoYoutubeActivity.EXTRA_URL, url);
+            startActivity(intent);
+        } catch (Throwable error) {
+            CrashLog.write(getApplicationContext(), "Could not launch GeckoView YouTube browser", error);
+            Toast.makeText(this, "YouTube browser could not open. Check diagnostics.", Toast.LENGTH_LONG).show();
+        }
     }
 
     private Button makeButton(String label, int color) {
