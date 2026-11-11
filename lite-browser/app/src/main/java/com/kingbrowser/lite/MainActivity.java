@@ -125,7 +125,17 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams tvParams = new LinearLayout.LayoutParams(dp(48), dp(44));
         tvParams.leftMargin = dp(6);
         toolbar.addView(liveTv, tvParams);
-        liveTv.setOnClickListener(v -> startActivity(new Intent(this, TvChannelsActivity.class)));
+        liveTv.setOnClickListener(v -> {
+            try {
+                CrashLog.write(getApplicationContext(), "TV button tapped; launching channels screen");
+                startActivity(new Intent(MainActivity.this, TvChannelsActivity.class));
+            } catch (Throwable error) {
+                CrashLog.write(getApplicationContext(), "TV screen launch failed from browser toolbar", error);
+                Toast.makeText(MainActivity.this,
+                        "TV could not open. The error has been saved in Settings > diagnostics.",
+                        Toast.LENGTH_LONG).show();
+            }
+        });
 
         Button menu = makeButton("⋮", Color.argb(105, 255, 255, 255));
         menu.setTextSize(23);
@@ -150,6 +160,13 @@ public class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setSupportMultipleWindows(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        // Remove embedded-WebView markers while retaining the installed WebView engine.
+        // Some YouTube sessions reject or degrade browsers advertising the "wv" token.
+        String webViewAgent = settings.getUserAgentString();
+        if (webViewAgent != null) {
+            settings.setUserAgentString(webViewAgent.replace("; wv", "").replace("Version/4.0 ", ""));
+        }
         webView.setBackgroundColor(Color.TRANSPARENT);
 
         webView.setWebViewClient(new WebViewClient() {
