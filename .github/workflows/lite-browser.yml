@@ -48,14 +48,8 @@ jobs:
           test -s king_browser_lite_icon_transparent_512.png
           test -s king_browser_background.png
           cp king_browser_lite_icon_transparent_512.png king_browser_logo.png
-          # Keep the separate TV artwork under a valid Android resource name.
-          if [ -f "tv backround.jpg" ]; then
-            cp "tv backround.jpg" king_browser_tv_background.jpg
-            rm "tv backround.jpg"
-          fi
           test -s king_browser_logo.png
           test -s king_browser_background.png
-          test -s king_browser_tv_background.jpg
 
       - name: Build debug APK
         working-directory: lite-browser
