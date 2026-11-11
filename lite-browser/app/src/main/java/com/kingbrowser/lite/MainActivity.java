@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.content.Intent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -82,6 +84,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        CrashLog.install(getApplicationContext());
+        CrashLog.write(getApplicationContext(), "MainActivity onCreate");
         preferences = getSharedPreferences(PREFS, MODE_PRIVATE);
         AdBlockList.initialize(getApplicationContext());
 
@@ -169,7 +173,17 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request.isForMainFrame()) {
+                    CrashLog.write(getApplicationContext(), "WebView main-frame error " +
+                            request.getUrl() + " code=" + error.getErrorCode() + " " + error.getDescription());
+                }
+            }
+
+            @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                CrashLog.write(getApplicationContext(), "Page started: " + url);
                 if (!HOME_URL.equals(url)) addressBar.setText(url);
                 progressBar.setVisibility(View.VISIBLE);
             }
@@ -219,7 +233,8 @@ public class MainActivity extends Activity {
     private boolean isBlockedHost(String host) {
         if (host == null || isWhitelisted(host)) return false;
         String normalized = host.toLowerCase(Locale.ROOT);
-        // YouTube shares media hosts between ads and normal playback; never block them wholesale.
+        // Never filter YouTube's page, API, image or media endpoints: WebView playback
+        // depends on several Google-owned hosts and broad lists can break playback.
         if (isYouTubeCoreHost(normalized)) return false;
         if (preferences.getBoolean(PREF_ADBLOCK, true) && (matchesHost(normalized, AD_HOSTS) || AdBlockList.blocks(normalized))) return true;
         return preferences.getBoolean(PREF_TRACKING, true) && matchesHost(normalized, TRACKER_HOSTS);
@@ -227,8 +242,10 @@ public class MainActivity extends Activity {
 
     private boolean isYouTubeCoreHost(String host) {
         return host.equals("youtube.com") || host.endsWith(".youtube.com") ||
+                host.equals("youtubei.googleapis.com") || host.equals("youtube.googleapis.com") ||
                 host.equals("googlevideo.com") || host.endsWith(".googlevideo.com") ||
-                host.equals("ytimg.com") || host.endsWith(".ytimg.com");
+                host.equals("ytimg.com") || host.endsWith(".ytimg.com") ||
+                host.equals("ggpht.com") || host.endsWith(".ggpht.com");
     }
 
     private boolean isBlockedAdUrl(Uri uri) {
@@ -237,6 +254,8 @@ public class MainActivity extends Activity {
         String path = uri.getPath();
         if (host == null || path == null) return false;
         host = host.toLowerCase(Locale.ROOT);
+        // Do not cancel YouTube API/page requests; it causes playback and sign-in errors.
+        if (isYouTubeCoreHost(host)) return false;
         if ((host.equals("youtube.com") || host.endsWith(".youtube.com")) &&
                 (path.startsWith("/pagead/") || path.startsWith("/api/stats/ads") ||
                  path.startsWith("/ptracking"))) return true;
@@ -378,6 +397,26 @@ public class MainActivity extends Activity {
         counter.setTextSize(14);
         counter.setPadding(0, dp(18), 0, dp(12));
         content.addView(counter);
+
+        Button diagnostics = makeButton("View / copy diagnostic log", Color.rgb(48, 91, 115));
+        content.addView(diagnostics, new LinearLayout.LayoutParams(-1, dp(46)));
+        diagnostics.setOnClickListener(v -> {
+            String report = CrashLog.read(getApplicationContext());
+            android.widget.TextView logView = new android.widget.TextView(this);
+            logView.setText(report.isEmpty() ? "No diagnostic entries yet." : report);
+            logView.setTextIsSelectable(true);
+            logView.setTextColor(Color.WHITE);
+            logView.setPadding(dp(12), dp(12), dp(12), dp(12));
+            ScrollView logScroll = new ScrollView(this);
+            logScroll.addView(logView);
+            new AlertDialog.Builder(this).setTitle("KING BROWSER diagnostics")
+                .setView(logScroll)
+                .setNeutralButton("Copy", (d, which) -> {
+                    ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                    if (clipboard != null) clipboard.setPrimaryClip(ClipData.newPlainText("KING BROWSER log", report));
+                    Toast.makeText(this, "Diagnostic log copied", Toast.LENGTH_SHORT).show();
+                }).setPositiveButton("Close", null).show();
+        });
 
         Button whitelist = makeButton(whitelistButtonLabel(), Color.rgb(65, 76, 112));
         content.addView(whitelist, new LinearLayout.LayoutParams(-1, dp(46)));
