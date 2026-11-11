@@ -44,8 +44,8 @@ jobs:
         run: |
           set -e
           RES="lite-browser/app/src/main/res/drawable-nodpi"
-          test -s "$RES/king_browser_new_icon.jpg"
-          test -s "$RES/king_browser_blue_background.jpg"
+          test -s "$RES/king_browser_lite_icon_transparent_512.png"
+          test -s "$RES/king_browser_background.png"
       - name: Build debug APK
         working-directory: lite-browser
         run: gradle --no-daemon :app:assembleDebug
