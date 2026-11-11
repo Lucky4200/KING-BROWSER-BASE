@@ -87,10 +87,7 @@ public class MainActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackground(new GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            new int[]{Color.rgb(9, 13, 28), Color.rgb(25, 20, 48), Color.rgb(8, 20, 35)}
-        ));
+        root.setBackgroundResource(R.drawable.king_browser_background);
 
         LinearLayout toolbar = new LinearLayout(this);
         toolbar.setOrientation(LinearLayout.HORIZONTAL);
