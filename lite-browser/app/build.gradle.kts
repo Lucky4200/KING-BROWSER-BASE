@@ -6,6 +6,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.5.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.5.1")
     implementation("androidx.media3:media3-ui:1.5.1")
+    implementation("org.mozilla.geckoview:geckoview-stable:159.0.20261102144711")
 }
 
 android {
@@ -14,10 +15,10 @@ android {
 
     defaultConfig {
         applicationId = "com.kingbrowser.lite"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.5-lite"
+        versionCode = 7
+        versionName = "1.6-lite"
     }
 
     buildTypes {
