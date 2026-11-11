@@ -97,6 +97,12 @@ public class MainActivity extends Activity {
         toolbar.setPadding(dp(10), dp(10), dp(10), dp(9));
         toolbar.setBackground(rounded(Color.argb(145, 27, 32, 54), dp(18)));
 
+        Button home = makeButton("⌂", Color.rgb(65, 76, 112));
+        home.setTextSize(22);
+        LinearLayout.LayoutParams homeParams = new LinearLayout.LayoutParams(dp(46), dp(44));
+        homeParams.rightMargin = dp(7);
+        toolbar.addView(home, homeParams);
+
         addressBar = new EditText(this);
         addressBar.setSingleLine(true);
         addressBar.setHint("Search or enter website");
@@ -191,6 +197,7 @@ public class MainActivity extends Activity {
         root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1f));
         setContentView(root);
 
+        home.setOnClickListener(v -> showHomePage());
         go.setOnClickListener(v -> loadAddress());
         menu.setOnClickListener(v -> showSettings());
         addressBar.setOnEditorActionListener((TextView v, int actionId, KeyEvent event) -> {
@@ -205,7 +212,7 @@ public class MainActivity extends Activity {
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
         } else {
-            webView.loadUrl("https://www.youtube.com");
+            showHomePage();
         }
     }
 
