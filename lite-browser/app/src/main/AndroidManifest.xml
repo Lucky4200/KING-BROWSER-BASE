@@ -15,6 +15,9 @@
             android:exported="false"
             android:screenOrientation="sensor" />
         <activity
+            android:name=".GeckoYoutubeActivity"
+            android:exported="false" />
+        <activity
             android:name=".TvChannelsActivity"
             android:exported="false" />
         <activity
