@@ -40,17 +40,12 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Prepare Android image resources
+      - name: Verify uploaded Android image resources
         run: |
           set -e
-          cd lite-browser/app/src/main/res/drawable-nodpi
-          # The current uploaded assets are PNG files; preserve their original formats.
-          test -s king_browser_lite_icon_transparent_512.png
-          test -s king_browser_background.png
-          cp king_browser_lite_icon_transparent_512.png king_browser_logo.png
-          test -s king_browser_logo.png
-          test -s king_browser_background.png
-
+          RES="lite-browser/app/src/main/res/drawable-nodpi"
+          test -s "$RES/king_browser_new_icon.jpg"
+          test -s "$RES/king_browser_blue_background.jpg"
       - name: Build debug APK
         working-directory: lite-browser
         run: gradle --no-daemon :app:assembleDebug
