@@ -285,20 +285,24 @@ public class MainActivity extends Activity {
 
     private void injectYouTubeAdControls(WebView view, String url) {
         if (url == null || !(url.contains("youtube.com") || url.contains("youtube-nocookie.com"))) return;
+        // Re-inject after navigation without creating duplicate observers/timers in the same document.
         String script = "(function(){if(window.__kingYtAdHelper)return;window.__kingYtAdHelper=true;" +
-                "var skip=function(){try{" +
-                "var buttons=document.querySelectorAll('.ytp-ad-skip-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button-container button,.ytp-ad-skip-button-slot button,button.ytp-ad-skip-button');" +
+                "var style=document.createElement('style');" +
+                "style.textContent='.ad-showing .video-ads,.ytp-ad-module,.ytp-ad-overlay-container,.ytp-ad-text,.ytp-ad-image-overlay,#player-ads,ytd-ad-slot-renderer,ytd-promoted-sparkles-web-renderer,ytd-display-ad-renderer,ytm-promoted-sparkles-web-renderer,ytm-companion-ad-renderer{display:none!important}';" +
+                "(document.head||document.documentElement).appendChild(style);" +
+                "var handle=function(){try{" +
+                "var player=document.querySelector('.html5-video-player');" +
+                "var video=document.querySelector('video');" +
+                "var showing=!!(player&&player.classList.contains('ad-showing'));" +
+                "if(video&&showing){if(typeof video.__kingWasMuted==='undefined')video.__kingWasMuted=video.muted;video.muted=true;}" +
+                "else if(video&&typeof video.__kingWasMuted!=='undefined'){video.muted=video.__kingWasMuted;delete video.__kingWasMuted;}" +
+                "var buttons=document.querySelectorAll('.ytp-ad-skip-button,.ytp-ad-skip-button-modern,.ytp-ad-skip-button-container button,.ytp-ad-skip-button-slot button,.ytp-skip-ad-button');" +
                 "buttons.forEach(function(b){if(b&&b.offsetParent!==null&&!b.disabled)b.click();});" +
                 "document.querySelectorAll('.ytp-ad-overlay-close-button,.ytp-ad-overlay-close-button button').forEach(function(b){if(b&&b.offsetParent!==null)b.click();});" +
-                "var player=document.querySelector('.html5-video-player');" +
-                "if(player&&player.classList.contains('ad-showing')){" +
-                "var skipNow=player.querySelector('.ytp-ad-skip-button,.ytp-ad-skip-button-modern');" +
-                "if(skipNow&&skipNow.offsetParent!==null&&!skipNow.disabled)skipNow.click();" +
-                "}" +
                 "}catch(e){}};" +
-                "var observer=new MutationObserver(skip);" +
+                "var observer=new MutationObserver(handle);" +
                 "if(document.documentElement)observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true});" +
-                "skip();window.setInterval(skip,500);" +
+                "handle();window.setInterval(handle,400);" +
                 "})();";
         view.evaluateJavascript(script, null);
     }
