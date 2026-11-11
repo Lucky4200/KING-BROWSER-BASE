@@ -40,6 +40,17 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Download and prepare uBlock Origin Firefox extension
+        run: |
+          set -euo pipefail
+          ASSETS="lite-browser/app/src/main/assets/ublock"
+          mkdir -p "$ASSETS"
+          curl -fL --retry 3 --retry-delay 2 \
+            "https://github.com/gorhill/uBlock/releases/download/1.76.0/uBlock0_1.76.0.firefox.signed.xpi" \
+            -o /tmp/ublock-origin.xpi
+          unzip -q /tmp/ublock-origin.xpi -d "$ASSETS"
+          test -s "$ASSETS/manifest.json"
+          grep -q "uBlock0@raymondhill.net" "$ASSETS/manifest.json"
       - name: Verify uploaded Android image resources
         run: |
           set -e
