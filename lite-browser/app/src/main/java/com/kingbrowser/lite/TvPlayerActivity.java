@@ -28,6 +28,7 @@ public class TvPlayerActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        CrashLog.write(getApplicationContext(), "TV player onCreate");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         streamUrl = getIntent().getStringExtra("stream_url");
@@ -83,6 +84,7 @@ public class TvPlayerActivity extends Activity {
             playerView.setPlayer(player);
             player.addListener(new Player.Listener() {
                 @Override public void onPlayerError(PlaybackException error) {
+                    CrashLog.write(getApplicationContext(), "TV playback error: " + error.getErrorCodeName(), error);
                     showError("This channel could not play (" + error.getErrorCodeName() + ").\nTry another channel.");
                 }
                 @Override public void onPlaybackStateChanged(int state) {
@@ -94,6 +96,7 @@ public class TvPlayerActivity extends Activity {
             player.prepare();
             player.setPlayWhenReady(true);
         } catch (Exception error) {
+            CrashLog.write(getApplicationContext(), "TV player failed to initialize stream", error);
             showError("Unable to start this stream. Try another channel.");
         }
     }
