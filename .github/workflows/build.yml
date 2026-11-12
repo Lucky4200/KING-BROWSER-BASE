@@ -41,15 +41,15 @@ jobs:
             chromium/src/out/Default/obj
             chromium/src/out/Default/.ninja_log
             chromium/src/out/Default/.ninja_deps
-          key: king-browser-arm64-v2-${{ hashFiles('args.gn', '.gclient', 'vanadium/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: king-browser-arm64-v3-${{ hashFiles('args.gn', '.gclient') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            king-browser-arm64-v2-${{ hashFiles('args.gn', '.gclient', 'vanadium/**') }}-
+            king-browser-arm64-v3-${{ hashFiles('args.gn', '.gclient') }}-
 
       - name: Set build timestamp
         run: echo "UNIX_TIME=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Build and sign ARM64 APK
-        timeout-minutes: 315
+        timeout-minutes: 350
         env:
           DEBIAN_FRONTEND: noninteractive
           LOCAL_TEST_JKS: ${{ secrets.LOCAL_TEST_JKS }}
@@ -68,7 +68,7 @@ jobs:
             chromium/src/out/Default/obj
             chromium/src/out/Default/.ninja_log
             chromium/src/out/Default/.ninja_deps
-          key: king-browser-arm64-v2-${{ hashFiles('args.gn', '.gclient', 'vanadium/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: king-browser-arm64-v3-${{ hashFiles('args.gn', '.gclient') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Prepare release APK
         id: release
